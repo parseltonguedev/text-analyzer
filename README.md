@@ -2,11 +2,12 @@
 
 ## TODO:
 
-- [ ] top longest and shortest sentences words concatenation to correct string format
-- [ ] leave only unique palindrome words in list and number of them
+- [x] top longest and shortest sentences words concatenation to correct string format
+- [x] leave only unique palindrome words in list and number of them
 - [ ] improve time calculation for data processing
+- [x] make reversed text with intact words correct output
+- [ ] make correct string join for list of strings (i.e. remove whitespaces before symbols)
 - [ ] make more pretty report time generation 
-- [ ] make reversed text with intact words correct output
 - [ ] add support UTF8 encoding text
 - [ ] add CLI support with click:
   * help -h

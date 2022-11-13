@@ -85,11 +85,15 @@ class TextAnalyzer:
             "Top 10 shortest sentences": self.get_n_shortest_sentences(10),
             "The number of palindrome words": self.get_number_of_palindromes(),
             "Top 10 longest palindrome words": self.get_n_palindrome_words(10),
-            "Is the whole text a palindrome": self.is_text_palindrome(),
-            "Reversed text": self.get_reversed_text(self.text.file_name),
-            "Reversed text with the characters order in the words kept intact":
+            "Is the whole text a palindrome": self.is_text_a_palindrome(),
+            "Is the all words in text palindromes": self.is_all_words_palindromes(),
+            "Reversed text saved to ": self.get_reversed_text(self.text.file_name),
+            "Reversed text with the characters order in the words kept intact saved to":
                 self.get_reversed_text_with_characters_in_words_intact(self.text.file_name),
         }
+
+        for topic, result in analysis_results.items():
+            print(f"{topic} --- {result}")
 
         analysis_file_name = (
             f"analysis_results_{self.text.file_name.replace('.txt', '.json')}"
@@ -113,7 +117,7 @@ class TextAnalyzer:
         return len(self.text.sentences)
 
     def get_characters_frequency(self):
-        characters_frequency = FreqDist(self.text.characters).most_common()
+        characters_frequency = dict(FreqDist(self.text.characters).most_common())
         return characters_frequency
 
     def get_characters_distribution(self):
@@ -122,7 +126,7 @@ class TextAnalyzer:
 
         characters_distribution = {
             character: round(frequency * 100 / len(self.text.characters), 3)
-            for character, frequency in self.get_characters_frequency()
+            for character, frequency in self.get_characters_frequency().items()
         }
         return characters_distribution
 
@@ -144,19 +148,30 @@ class TextAnalyzer:
         )
 
     def get_n_most_used_words(self, number_of_words: int):
-        return self.get_words_frequency()[:number_of_words]
+        return dict(self.get_words_frequency()[:number_of_words])
 
     def get_n_longest_words(self, number_of_words: int):
-        return self.text.words[:number_of_words]
+        longest_words = sorted(set(self.text.words), key=len, reverse=True)[:number_of_words]
+        return longest_words
 
     def get_n_shortest_words(self, number_of_words: int):
-        return self.text.words[:-number_of_words:-1]
+        shortest_words = sorted(set(self.text.words), key=len, reverse=True)[:-number_of_words - 1:-1]
+        return shortest_words
+
+    def _get_unique_sentences(self):
+        unique_sentences = sorted([list(unique_sentence) for unique_sentence in
+                set([tuple(sentence) for sentence in self.text.sentences])], key=len, reverse=True)
+        return unique_sentences
 
     def get_n_longest_sentences(self, number_of_sentences):
-        return self.text.sentences[:number_of_sentences]
+        unique_sentences = self._get_unique_sentences()
+        longest_sentences = [" ".join(sentence) for sentence in unique_sentences[:number_of_sentences]]
+        return longest_sentences
 
     def get_n_shortest_sentences(self, number_of_sentences):
-        return self.text.sentences[:-number_of_sentences:-1]
+        unique_sentences = self._get_unique_sentences()
+        shortest_sentences = [" ".join(sentence) for sentence in unique_sentences[:-number_of_sentences - 1:-1]]
+        return shortest_sentences
 
     def get_number_of_palindromes(self):
         return len(self.get_palindrome_words())
@@ -170,15 +185,19 @@ class TextAnalyzer:
         return words_frequency
 
     def get_palindrome_words(self):
-        palindrome_words = [
+        palindrome_words = sorted(set([
             word
             for word in self.text.words
             if str(word).lower() == str(word).lower()[::-1]
-        ]
+        ]), key=len, reverse=True)
         return palindrome_words
 
-    def is_text_palindrome(self):
-        return self.text.words == self.get_palindrome_words()
+    def is_text_a_palindrome(self):
+        filtered_text = ''.join(letter.lower() for letter in self.text.raw if letter.isalnum())
+        return filtered_text == filtered_text[::-1]
+
+    def is_all_words_palindromes(self):
+        return sorted(self.text.words) == sorted(self.get_palindrome_words())
 
     def get_reversed_text(self, file_name):
         reversed_text = self.text.raw[::-1]
@@ -190,8 +209,7 @@ class TextAnalyzer:
         return reversed_text_file_name
 
     def get_reversed_text_with_characters_in_words_intact(self, file_name):
-        reversed_text = self.text.raw[::-1]
-        reversed_text_intact = " ".join([word[::-1] for word in reversed_text.split()])
+        reversed_text_intact = " ".join([" ".join(reversed(sentence)) for sentence in self.text.file_corpus_reader.sents()][::-1])
         reversed_text_words_intact_file_name = f"reversed_words_intact_{file_name}"
 
         with open(
@@ -212,7 +230,6 @@ def text_analyzer_runner(text_file_name):
     text_analyzer = TextAnalyzer(text)
     analysis_result = text_analyzer.get_text_analysis()
     execution_time = (time.time() - start_time) * 1000
-    print(analysis_result)
     print(f"The time taken to process the text (ms): {execution_time}")
     end_date_time_string = datetime.now().strftime("%I:%M:%S%p on %B %d, %Y")
     print(
@@ -222,12 +239,13 @@ def text_analyzer_runner(text_file_name):
 
 
 if __name__ == "__main__":
-    text_files = [file for file in os.listdir() if file.endswith(".txt")]
-    resource_names = [
-        "http://www.textfiles.com/stories/bgcspoof.txt",
-        "http://www.textfiles.com/stories/foxnstrk.txt",
-        "http://www.textfiles.com/stories/hansgrtl.txt",
-    ]
+    # text_files = [file for file in os.listdir() if file.endswith(".txt")]
+    # resource_names = [
+    #     "http://www.textfiles.com/stories/bgcspoof.txt",
+    #     "http://www.textfiles.com/stories/foxnstrk.txt",
+    #     "http://www.textfiles.com/stories/hansgrtl.txt",
+    # ]
+    text_files = ["palindrome.txt"]
 
     with multiprocessing.Pool() as pool:
         pool.map(text_analyzer_runner, text_files)
