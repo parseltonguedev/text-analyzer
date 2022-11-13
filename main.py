@@ -4,9 +4,11 @@ import os
 import time
 from datetime import datetime
 from urllib.request import urlopen
+import validators
 
 from nltk import FreqDist
 from nltk.corpus import PlaintextCorpusReader, stopwords
+from nltk.tokenize import sent_tokenize
 
 
 class SourceNotSupported(Exception):
@@ -26,10 +28,11 @@ class Text:
             )
 
         self.file_name = file_name
-        self.file_corpus_reader = self.get_text(file_name)
+        self.file_corpus_reader = self.get_text()
         self.raw = self.file_corpus_reader.raw()
         self.paragraphs = self.file_corpus_reader.paras()
         self.sentences = sorted(self.file_corpus_reader.sents(), key=len, reverse=True)
+        self.tokenized_sentences = sent_tokenize(self.raw)
         self.words = sorted(
             [
                 word.lower()
@@ -43,12 +46,12 @@ class Text:
         )
         self.characters = [character for word in self.words for character in word]
 
-    def get_text(self, file_name: str) -> PlaintextCorpusReader:
-        if file_name.startswith("http") and file_name.endswith(".txt"):
-            text = self.get_file_from_web_resource(file_name)
+    def get_text(self) -> PlaintextCorpusReader:
+        if validators.url(self.file_name):
+            text = self.get_file_from_web_resource(self.file_name)
             return text
-        elif file_name.endswith(".txt"):
-            text = PlaintextCorpusReader(self.current_folder, file_name)
+        elif self.file_name.endswith(".txt"):
+            text = PlaintextCorpusReader(self.current_folder, self.file_name)
             return text
 
     def get_file_from_web_resource(self, resource_url: str) -> PlaintextCorpusReader:
@@ -163,15 +166,16 @@ class TextAnalyzer:
                 set([tuple(sentence) for sentence in self.text.sentences])], key=len, reverse=True)
         return unique_sentences
 
+    def _get_sentences_sorted_by_length(self):
+        return sorted(self.text.tokenized_sentences, key=len, reverse=True)
+
     def get_n_longest_sentences(self, number_of_sentences):
-        unique_sentences = self._get_unique_sentences()
-        longest_sentences = [" ".join(sentence) for sentence in unique_sentences[:number_of_sentences]]
-        return longest_sentences
+        sentences_by_length = self._get_sentences_sorted_by_length()
+        return sentences_by_length[:number_of_sentences]
 
     def get_n_shortest_sentences(self, number_of_sentences):
-        unique_sentences = self._get_unique_sentences()
-        shortest_sentences = [" ".join(sentence) for sentence in unique_sentences[:-number_of_sentences - 1:-1]]
-        return shortest_sentences
+        sentences_by_length = self._get_sentences_sorted_by_length()
+        return sentences_by_length[:-number_of_sentences - 1:-1]
 
     def get_number_of_palindromes(self):
         return len(self.get_palindrome_words())
@@ -240,12 +244,19 @@ def text_analyzer_runner(text_file_name):
 
 if __name__ == "__main__":
     # text_files = [file for file in os.listdir() if file.endswith(".txt")]
-    # resource_names = [
-    #     "http://www.textfiles.com/stories/bgcspoof.txt",
-    #     "http://www.textfiles.com/stories/foxnstrk.txt",
-    #     "http://www.textfiles.com/stories/hansgrtl.txt",
-    # ]
-    text_files = ["palindrome.txt"]
+    text_files = [
+        "http://www.textfiles.com/stories/stairdre.txt",
+        "http://www.textfiles.com/stories/bgcspoof.txt",
+        "http://www.textfiles.com/stories/foxnstrk.txt",
+        "http://www.textfiles.com/stories/hansgrtl.txt",
+        "http://www.textfiles.com/stories/weeprncs.txt",
+        "http://www.textfiles.com/stories/yukon.txt"
+    ]
+
+    start_total_time = time.time()
 
     with multiprocessing.Pool() as pool:
         pool.map(text_analyzer_runner, text_files)
+
+    total_execution_time = (time.time() - start_total_time) * 1000
+    print(f"The time taken to process all texts (ms): {total_execution_time}")
