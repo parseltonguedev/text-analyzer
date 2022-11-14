@@ -7,8 +7,8 @@
 - [x] improve time calculation for data processing
 - [x] make reversed text with intact words correct output
 - [x] make correct string join for list of strings (i.e. remove whitespaces before symbols)
-- [ ] make more pretty report time generation 
-- [ ] add support UTF8 encoding text
+- [x] make more pretty report time generation 
+- [x] add support UTF8 encoding text
 - [ ] add CLI support with click:
   * help -h
   * multiple local file names -f

@@ -59,9 +59,9 @@ class Text:
         downloaded_file_name = resource_url.split("/")[-1]
 
         with urlopen(resource_url) as webpage:
-            content = webpage.read()
+            content = webpage.read().decode("utf-8")
 
-        with open(downloaded_file_name, "wb") as download:
+        with open(downloaded_file_name, "w", encoding="utf-8") as download:
             self.file_name = downloaded_file_name
             download.write(content)
 
@@ -94,6 +94,8 @@ class TextAnalyzer:
             "Reversed text saved to ": self.get_reversed_text(self.text.file_name),
             "Reversed text with the characters order in the words kept intact saved to":
                 self.get_reversed_text_with_characters_in_words_intact(self.text.file_name),
+            f"Report generated for {self.text.file_name} at (date and time)":
+                datetime.now().strftime("%I:%M:%S%p on %B %d, %Y")
         }
 
         for topic, result in analysis_results.items():
@@ -103,8 +105,8 @@ class TextAnalyzer:
             f"analysis_results_{self.text.file_name.replace('.txt', '.json')}"
         )
 
-        with open(analysis_file_name, "w") as analysis_results_file:
-            json.dump(analysis_results, analysis_results_file, indent=4)
+        with open(analysis_file_name, "w", encoding="utf-8") as analysis_results_file:
+            json.dump(analysis_results, analysis_results_file, indent=4, ensure_ascii=False)
 
         return analysis_results
 
@@ -228,7 +230,7 @@ class TextAnalyzer:
         reversed_text = self.text.raw[::-1]
         reversed_text_file_name = f"reversed_{file_name}"
 
-        with open(reversed_text_file_name, "w") as reversed_text_file:
+        with open(reversed_text_file_name, "w", encoding="utf-8") as reversed_text_file:
             reversed_text_file.write(reversed_text)
 
         return reversed_text_file_name
@@ -251,7 +253,7 @@ class TextAnalyzer:
         reversed_text_words_intact_file_name = f"reversed_words_intact_{file_name}"
 
         with open(
-            reversed_text_words_intact_file_name, "w"
+            reversed_text_words_intact_file_name, "w", encoding="utf-8"
         ) as reversed_text_words_intact_file:
             reversed_text_words_intact_file.write(reversed_text_intact)
 
@@ -268,22 +270,13 @@ def text_analyzer_runner(text_file_name):
     text_analyzer = TextAnalyzer(text)
     analysis_result = text_analyzer.get_text_analysis()
     execution_time = (time.time() - start_time) * 1000
-    print(f"The time taken to process the text (ms): {execution_time}")
-    end_date_time_string = datetime.now().strftime("%I:%M:%S%p on %B %d, %Y")
-    print(
-        f"Report generated for {text_file_name} at (date and time): {end_date_time_string}"
-    )
+    print(f"The time taken to process the {text_file_name} text {execution_time:.2f} ms")
     return analysis_result
 
 
 if __name__ == "__main__":
     text_files = [
-        "http://www.textfiles.com/stories/stairdre.txt",
-        "http://www.textfiles.com/stories/bgcspoof.txt",
-        "http://www.textfiles.com/stories/foxnstrk.txt",
-        "http://www.textfiles.com/stories/hansgrtl.txt",
-        "http://www.textfiles.com/stories/weeprncs.txt",
-        "http://www.textfiles.com/stories/yukon.txt"
+        "https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-demo.txt",
     ]
 
     start_total_time = time.time()
@@ -292,4 +285,4 @@ if __name__ == "__main__":
         pool.map(text_analyzer_runner, text_files)
 
     total_execution_time = (time.time() - start_total_time) * 1000
-    print(f"The time taken to process all texts (ms): {total_execution_time}")
+    print(f"The time taken to process all texts: {total_execution_time:.2f} ms")
