@@ -6,7 +6,7 @@
 - [x] leave only unique palindrome words in list and number of them
 - [x] improve time calculation for data processing
 - [x] make reversed text with intact words correct output
-- [ ] make correct string join for list of strings (i.e. remove whitespaces before symbols)  # re.sub(r"(?: ([.,;]))", r"\g<1>", " ".join(words))
+- [x] make correct string join for list of strings (i.e. remove whitespaces before symbols)
 - [ ] make more pretty report time generation 
 - [ ] add support UTF8 encoding text
 - [ ] add CLI support with click:

@@ -1,11 +1,12 @@
 import json
 import multiprocessing
 import os
+import re
 import time
 from datetime import datetime
 from urllib.request import urlopen
-import validators
 
+import validators
 from nltk import FreqDist
 from nltk.corpus import PlaintextCorpusReader, stopwords
 from nltk.tokenize import sent_tokenize
@@ -154,16 +155,28 @@ class TextAnalyzer:
         return dict(self.get_words_frequency()[:number_of_words])
 
     def get_n_longest_words(self, number_of_words: int):
-        longest_words = sorted(set(self.text.words), key=len, reverse=True)[:number_of_words]
+        longest_words = sorted(set(self.text.words), key=len, reverse=True)[
+            :number_of_words
+        ]
         return longest_words
 
     def get_n_shortest_words(self, number_of_words: int):
-        shortest_words = sorted(set(self.text.words), key=len, reverse=True)[:-number_of_words - 1:-1]
+        shortest_words = sorted(set(self.text.words), key=len, reverse=True)[
+            : -number_of_words - 1: -1
+        ]
         return shortest_words
 
     def _get_unique_sentences(self):
-        unique_sentences = sorted([list(unique_sentence) for unique_sentence in
-                set([tuple(sentence) for sentence in self.text.sentences])], key=len, reverse=True)
+        unique_sentences = sorted(
+            [
+                list(unique_sentence)
+                for unique_sentence in set(
+                    [tuple(sentence) for sentence in self.text.sentences]
+                )
+            ],
+            key=len,
+            reverse=True,
+        )
         return unique_sentences
 
     def _get_sentences_sorted_by_length(self):
@@ -175,7 +188,7 @@ class TextAnalyzer:
 
     def get_n_shortest_sentences(self, number_of_sentences):
         sentences_by_length = self._get_sentences_sorted_by_length()
-        return sentences_by_length[:-number_of_sentences - 1:-1]
+        return sentences_by_length[: -number_of_sentences - 1: -1]
 
     def get_number_of_palindromes(self):
         return len(self.get_palindrome_words())
@@ -189,15 +202,23 @@ class TextAnalyzer:
         return words_frequency
 
     def get_palindrome_words(self):
-        palindrome_words = sorted(set([
-            word
-            for word in self.text.words
-            if str(word).lower() == str(word).lower()[::-1]
-        ]), key=len, reverse=True)
+        palindrome_words = sorted(
+            set(
+                [
+                    word
+                    for word in self.text.words
+                    if str(word).lower() == str(word).lower()[::-1]
+                ]
+            ),
+            key=len,
+            reverse=True,
+        )
         return palindrome_words
 
     def is_text_a_palindrome(self):
-        filtered_text = ''.join(letter.lower() for letter in self.text.raw if letter.isalnum())
+        filtered_text = "".join(
+            letter.lower() for letter in self.text.raw if letter.isalnum()
+        )
         return filtered_text == filtered_text[::-1]
 
     def is_all_words_palindromes(self):
@@ -213,7 +234,20 @@ class TextAnalyzer:
         return reversed_text_file_name
 
     def get_reversed_text_with_characters_in_words_intact(self, file_name):
-        reversed_text_intact = " ".join([" ".join(reversed(sentence)) for sentence in self.text.file_corpus_reader.sents()][::-1])
+        revered_sentences_with_words_intact = []
+
+        for sentence in self.text.file_corpus_reader.sents():
+            sub_formatted_setences = re.sub(
+                r"""(?: ([.,:'"!\[\]\-]))""", r"\g<1>", " ".join(sentence[::-1])
+            )
+            formatted_setences = re.sub(
+                r"""(?:([.';:"!\[\]\-]) )""",
+                r"\g<1>",
+                " ".join(sub_formatted_setences.split()),
+            )
+            revered_sentences_with_words_intact.append(formatted_setences)
+
+        reversed_text_intact = " ".join(revered_sentences_with_words_intact)
         reversed_text_words_intact_file_name = f"reversed_words_intact_{file_name}"
 
         with open(
@@ -243,7 +277,6 @@ def text_analyzer_runner(text_file_name):
 
 
 if __name__ == "__main__":
-    # text_files = [file for file in os.listdir() if file.endswith(".txt")]
     text_files = [
         "http://www.textfiles.com/stories/stairdre.txt",
         "http://www.textfiles.com/stories/bgcspoof.txt",
