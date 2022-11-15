@@ -1,9 +1,12 @@
 import json
+import logging
 import multiprocessing
 import os
 import re
+import sys
 import time
 from datetime import datetime
+from urllib.error import URLError
 from urllib.request import urlopen
 
 import click
@@ -11,6 +14,19 @@ import validators
 from nltk import FreqDist
 from nltk.corpus import PlaintextCorpusReader, stopwords
 from nltk.tokenize import sent_tokenize
+
+TIME_FORMAT = "%I:%M:%S%p on %B %d, %Y"
+
+logging.basicConfig(
+    filename="text_analyzer.log",
+    encoding="utf-8",
+    format="[%(asctime)s] [%(source)-12s] [%(source_name)-12s] %(levelname)-8s %(message)s",
+    datefmt=TIME_FORMAT,
+    level=logging.DEBUG,
+)
+stdout_handler = logging.StreamHandler(stream=sys.stdout)
+logger = logging.getLogger("text_analyzer")
+logger.addHandler(stdout_handler)
 
 
 class SourceNotSupported(Exception):
@@ -30,6 +46,7 @@ class Text:
             )
 
         self.file_name = file_name
+        self.source = "local file"
         self.file_corpus_reader = self.get_text()
         self.raw = self.file_corpus_reader.raw()
         self.paragraphs = self.file_corpus_reader.paras()
@@ -53,14 +70,38 @@ class Text:
             text = self.get_file_from_web_resource(self.file_name)
             return text
         elif self.file_name.endswith(".txt"):
-            text = PlaintextCorpusReader(self.current_folder, self.file_name)
-            return text
+            try:
+                text = PlaintextCorpusReader(self.current_folder, self.file_name)
+            except FileNotFoundError as file_not_found_exception:
+                logger.error(
+                    f"File not found in {self.current_folder} with {file_not_found_exception}",
+                    extra={"source": self.source, "source_name": self.file_name},
+                )
+            else:
+                return text
 
     def get_file_from_web_resource(self, resource_url: str) -> PlaintextCorpusReader:
+        self.source = "web resource"
         downloaded_file_name = resource_url.split("/")[-1]
 
-        with urlopen(resource_url) as webpage:
-            content = webpage.read().decode("utf-8")
+        try:
+            with urlopen(resource_url) as webpage:
+                content = webpage.read().decode("utf-8")
+        except URLError as url_error_exception:
+            logger.error(
+                f"Not known resource name {url_error_exception}",
+                extra={"source": self.source, "source_name": self.file_name},
+            )
+        except ConnectionError as connection_exception:
+            logger.error(
+                f"Connection error occurred during getting web resource {connection_exception}",
+                extra={"source": self.source, "source_name": self.file_name},
+            )
+        except Exception as unexpected_exception:
+            logger.error(
+                f"Unexpected exception during getting web resource {unexpected_exception}",
+                extra={"source": self.source, "source_name": self.file_name},
+            )
 
         with open(downloaded_file_name, "w", encoding="utf-8") as download:
             self.file_name = downloaded_file_name
@@ -96,11 +137,14 @@ class TextAnalyzer:
             "Reversed text with the characters order in the words kept intact saved to":
                 self.get_reversed_text_with_characters_in_words_intact(self.text.file_name),
             f"Report generated for {self.text.file_name} at (date and time)":
-                datetime.now().strftime("%I:%M:%S%p on %B %d, %Y")
+                datetime.now().strftime(TIME_FORMAT)
         }
 
         for topic, result in analysis_results.items():
-            print(f"{topic} --- {result}")
+            logger.info(
+                f"{topic} --- {result}",
+                extra={"source": self.text.source, "source_name": self.text.file_name},
+            )
 
         analysis_file_name = (
             f"analysis_results_{self.text.file_name.replace('.txt', '.json')}"
@@ -263,18 +307,30 @@ class TextAnalyzer:
         return reversed_text_words_intact_file_name
 
 
-def text_analyzer_runner(text_file_name):
+def text_analyzer_runner(text_file_name: str):
     start_time = time.time()
-    start_date_time_string = datetime.now().strftime("%I:%M:%S%p on %B %d, %Y")
-    print(
-        f"Report generation for {text_file_name} started at: {start_date_time_string}"
+    start_date_time_string = datetime.now().strftime(TIME_FORMAT)
+    logger.info(
+        f"Report generation for {text_file_name} started at: {start_date_time_string}",
+        extra={
+            "source": "web resource"
+            if validators.url(text_file_name)
+            else "local file",
+            "source_name": text_file_name,
+        },
     )
     text = Text(text_file_name)
     text_analyzer = TextAnalyzer(text)
     analysis_result = text_analyzer.get_text_analysis()
     execution_time = (time.time() - start_time) * 1000
-    print(
-        f"The time taken to process the {text_file_name} text {execution_time:.2f} ms"
+    logger.info(
+        f"The time taken to process the {text_file_name} text {execution_time:.2f} ms",
+        extra={
+            "source": "web resource"
+            if validators.url(text_file_name)
+            else "local file",
+            "source_name": text_file_name,
+        },
     )
     return analysis_result
 
@@ -295,7 +351,10 @@ def main(file_names):
         pool.map(text_analyzer_runner, file_names)
 
     total_execution_time = (time.time() - start_total_time) * 1000
-    print(f"The time taken to process all texts: {total_execution_time:.2f} ms")
+    logger.info(
+        f"The time taken to process all texts: {total_execution_time:.2f} ms",
+        extra={"source": "provided sources", "source_name": file_names},
+    )
 
 
 if __name__ == "__main__":

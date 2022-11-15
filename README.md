@@ -18,7 +18,7 @@
   https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-demo.txt
   * Example with web resources: python main.py https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-demo.txt https://sherlock-holm.es/stories/plain-text/advs.txt https://sherlock-holm.es/stories/plain-text/sign.txt https://sherlock-holm.es/stories/plain-text/scan.txt
 - [ ] investigate multiprocessing and threading to process multiple files at the same time
-- [ ] add logging with structure:
+- [x] add logging with structure:
   * date|type of resource|filename or resource name|event(info,warning, critical)
-- [ ] add error handling (for example, binary file or failed to connect to server)
+- [x] add error handling (for example, binary file or failed to connect to server)
 - [ ] add setup.py file to build with sdist command or install using pip
