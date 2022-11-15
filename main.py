@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 from urllib.request import urlopen
 
+import click
 import validators
 from nltk import FreqDist
 from nltk.corpus import PlaintextCorpusReader, stopwords
@@ -106,7 +107,9 @@ class TextAnalyzer:
         )
 
         with open(analysis_file_name, "w", encoding="utf-8") as analysis_results_file:
-            json.dump(analysis_results, analysis_results_file, indent=4, ensure_ascii=False)
+            json.dump(
+                analysis_results, analysis_results_file, indent=4, ensure_ascii=False
+            )
 
         return analysis_results
 
@@ -239,15 +242,15 @@ class TextAnalyzer:
         revered_sentences_with_words_intact = []
 
         for sentence in self.text.file_corpus_reader.sents():
-            sub_formatted_setences = re.sub(
-                r"""(?: ([.,:'"!\[\]\-]))""", r"\g<1>", " ".join(sentence[::-1])
+            sub_formatted_sentences = re.sub(
+                r""" ([.,:'"!?\[\]\-])""", r"\g<1>", " ".join(sentence[::-1])
             )
-            formatted_setences = re.sub(
-                r"""(?:([.';:"!\[\]\-]) )""",
+            formatted_sentences = re.sub(
+                r"""([.';:"!\[\]\-]) """,
                 r"\g<1>",
-                " ".join(sub_formatted_setences.split()),
+                " ".join(sub_formatted_sentences.split()),
             )
-            revered_sentences_with_words_intact.append(formatted_setences)
+            revered_sentences_with_words_intact.append(formatted_sentences)
 
         reversed_text_intact = " ".join(revered_sentences_with_words_intact)
         reversed_text_words_intact_file_name = f"reversed_words_intact_{file_name}"
@@ -270,19 +273,30 @@ def text_analyzer_runner(text_file_name):
     text_analyzer = TextAnalyzer(text)
     analysis_result = text_analyzer.get_text_analysis()
     execution_time = (time.time() - start_time) * 1000
-    print(f"The time taken to process the {text_file_name} text {execution_time:.2f} ms")
+    print(
+        f"The time taken to process the {text_file_name} text {execution_time:.2f} ms"
+    )
     return analysis_result
 
 
-if __name__ == "__main__":
-    text_files = [
-        "https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-demo.txt",
-    ]
+@click.command()
+@click.argument("file_names", nargs=-1)
+def main(file_names):
+    """
+    Text analyzer runs from the console, and you can specify a file name(s), resource(s).
+    The "Text analyzer" is capable of processing multiple files/resources at the same time.\n
+    Example with local text files: python main.py file1.txt file2.txt file3.txt
+    Example with web resources: python main.py https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-demo.txt
 
+    """
     start_total_time = time.time()
 
     with multiprocessing.Pool() as pool:
-        pool.map(text_analyzer_runner, text_files)
+        pool.map(text_analyzer_runner, file_names)
 
     total_execution_time = (time.time() - start_total_time) * 1000
     print(f"The time taken to process all texts: {total_execution_time:.2f} ms")
+
+
+if __name__ == "__main__":
+    main()
