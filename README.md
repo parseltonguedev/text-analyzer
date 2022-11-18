@@ -1,5 +1,9 @@
 # Text Analyzer
 
+Text sources:
+- https://sherlock-holm.es/ascii/
+- https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-demo.txt
+
 ## TODO:
 
 - [x] top longest and shortest sentences words concatenation to correct string format
@@ -22,3 +26,13 @@
   * date|type of resource|filename or resource name|event(info,warning, critical)
 - [x] add error handling (for example, binary file or failed to connect to server)
 - [ ] add setup.py file to build with sdist command or install using pip
+
+
+## Issues:
+
+1. Using multiprocessing and urlopen raise this issue with some resources links:
+    ```
+    multiprocessing.pool.MaybeEncodingError: Error sending result: '<multiprocessing.pool.ExceptionWithTraceback object at 0x7f7e68b0a690>'. Reason: 'TypeError("cannot pickle '_io.BufferedReader' object")'
+    ```
+    
+    To avoid this issue I changed **urllib** to **requests** library to get web text documents from web resources
