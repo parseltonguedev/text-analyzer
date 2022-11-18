@@ -25,7 +25,12 @@ Text sources:
 - [x] add logging with structure:
   * date|type of resource|filename or resource name|event(info,warning, critical)
 - [x] add error handling (for example, binary file or failed to connect to server)
-- [ ] add setup.py file to build with sdist command or install using pip
+- [x] add setup.py file to build with sdist command or install using pip:
+  * python setup.py sdist
+  * It is important to remember, however, that running this file as a script (e.g. python setup.py sdist) 
+    is strongly discouraged, and that the majority of the command line interfaces are (or will be) deprecated (e.g. python setup.py install, python setup.py bdist_wininst, …).
+    We also recommend users to expose as much as possible configuration in a more declarative way via the pyproject.toml or setup.cfg, and keep the setup.py minimal with only the dynamic parts (or even omit it completely if applicable).
+- [ ] investigate setup.cfg or pyproject.toml
 
 
 ## Issues:

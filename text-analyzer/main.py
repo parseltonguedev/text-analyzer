@@ -22,7 +22,7 @@ logger = logging.getLogger("text_analyzer")
 formatter = logging.Formatter(LOG_FORMAT)
 
 stdout_handler = logging.StreamHandler()
-file_handler = logging.FileHandler("text_analyzer.log", encoding="utf-8")
+file_handler = logging.FileHandler("../text_analyzer.log", encoding="utf-8")
 
 logger.setLevel(logging.INFO)
 stdout_handler.setLevel(logging.INFO)
