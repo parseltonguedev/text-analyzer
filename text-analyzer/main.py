@@ -24,9 +24,9 @@ formatter = logging.Formatter(LOG_FORMAT)
 stdout_handler = logging.StreamHandler()
 file_handler = logging.FileHandler("../text_analyzer.log", encoding="utf-8")
 
-logger.setLevel(logging.INFO)
-stdout_handler.setLevel(logging.INFO)
-file_handler.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
+stdout_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logging.DEBUG)
 
 stdout_handler.setFormatter(formatter)
 file_handler.setFormatter(formatter)
@@ -41,14 +41,30 @@ class SourceNotSupported(Exception):
 
 class Text:
     current_folder = os.getcwd()
+    text_files_folder_name = os.path.join(current_folder, "text_files")
+    reversed_texts_folder_name = os.path.join(current_folder, "reversed")
+    reversed_intact_folder_name = os.path.join(current_folder, "reversed_intact")
+    texts_analysis_folder_name = os.path.join(current_folder, "texts_analysis")
+    os.makedirs(text_files_folder_name, exist_ok=True)
+    os.makedirs(reversed_texts_folder_name, exist_ok=True)
+    os.makedirs(reversed_intact_folder_name, exist_ok=True)
+    os.makedirs(texts_analysis_folder_name, exist_ok=True)
     stop_words = set(stopwords.words("english"))
 
     def __init__(self, file_name: str):
-        if not file_name.endswith(".txt") or (
-            not file_name.endswith(".txt") and not file_name.startswith("http")
-        ):
+        if not file_name.endswith(".txt") or validators.url(file_name):
+            logger.error(
+                "Text analyzer doesn't support provided source. "
+                "Provide web resource with text or local text file name",
+                extra={
+                    "text_source": WEB_RESOURCE
+                    if validators.url(file_name)
+                    else LOCAL_FILE,
+                    "source_name": self.file_name,
+                }
+            )
             raise SourceNotSupported(
-                f"Text analyzer doesn't support provided source. Provide web resource with text or local text file name"
+                "Text analyzer doesn't support provided source. Provide web resource with text or local text file name"
             )
 
         self.file_name = file_name
@@ -77,10 +93,12 @@ class Text:
             return text
         elif self.file_name.endswith(".txt"):
             try:
-                text = PlaintextCorpusReader(self.current_folder, self.file_name)
+                text = PlaintextCorpusReader(
+                    self.text_files_folder_name, self.file_name
+                )
             except FileNotFoundError as file_not_found_exception:
                 logger.error(
-                    f"File not found in {self.current_folder} with {file_not_found_exception}",
+                    f"File not found in {self.text_files_folder_name} with {file_not_found_exception}",
                     extra={"text_source": self.source, "source_name": self.file_name},
                 )
             else:
@@ -103,7 +121,7 @@ class Text:
             self.file_name = downloaded_file_name
             download.write(content.text)
 
-        return PlaintextCorpusReader(self.current_folder, downloaded_file_name)
+        return PlaintextCorpusReader(self.text_files_folder_name, downloaded_file_name)
 
 
 class TextAnalyzer:
@@ -149,7 +167,11 @@ class TextAnalyzer:
             f"analysis_results_{self.text.file_name.replace('.txt', '.json')}"
         )
 
-        with open(analysis_file_name, "w", encoding="utf-8") as analysis_results_file:
+        with open(
+            f"{os.path.join(self.text.texts_analysis_folder_name, analysis_file_name)}",
+            "w",
+            encoding="utf-8",
+        ) as analysis_results_file:
             json.dump(
                 analysis_results, analysis_results_file, indent=4, ensure_ascii=False
             )
@@ -276,7 +298,11 @@ class TextAnalyzer:
         reversed_text = self.text.raw[::-1]
         reversed_text_file_name = f"reversed_{file_name}"
 
-        with open(reversed_text_file_name, "w", encoding="utf-8") as reversed_text_file:
+        with open(
+            f"{os.path.join(self.text.reversed_texts_folder_name, reversed_text_file_name)}",
+            "w",
+            encoding="utf-8",
+        ) as reversed_text_file:
             reversed_text_file.write(reversed_text)
 
         return reversed_text_file_name
@@ -299,7 +325,9 @@ class TextAnalyzer:
         reversed_text_words_intact_file_name = f"reversed_words_intact_{file_name}"
 
         with open(
-            reversed_text_words_intact_file_name, "w", encoding="utf-8"
+            f"{os.path.join(self.text.reversed_intact_folder_name, reversed_text_words_intact_file_name)}",
+            "w",
+            encoding="utf-8",
         ) as reversed_text_words_intact_file:
             reversed_text_words_intact_file.write(reversed_text_intact)
 
@@ -309,29 +337,41 @@ class TextAnalyzer:
 def text_analyzer_runner(text_file_name: str):
     start_time = time.time()
     start_date_time_string = datetime.now().strftime(TIME_FORMAT)
-    logger.info(
-        f"Report generation for {text_file_name} started at: {start_date_time_string}",
-        extra={
-            "text_source": WEB_RESOURCE
-            if validators.url(text_file_name)
-            else LOCAL_FILE,
-            "source_name": text_file_name,
-        },
-    )
-    text = Text(text_file_name)
-    text_analyzer = TextAnalyzer(text)
-    analysis_result = text_analyzer.get_text_analysis()
-    execution_time = (time.time() - start_time) * 1000
-    logger.info(
-        f"The time taken to process the {text_file_name} text {execution_time:.2f} ms",
-        extra={
-            "text_source": WEB_RESOURCE
-            if validators.url(text_file_name)
-            else LOCAL_FILE,
-            "source_name": text_file_name,
-        },
-    )
-    return analysis_result
+    try:
+        text = Text(text_file_name)
+    except Exception as exception:
+        logger.error(
+            f"Unexpected error occurred {exception}",
+            extra={
+                "text_source": WEB_RESOURCE
+                if validators.url(text_file_name)
+                else LOCAL_FILE,
+                "source_name": text_file_name,
+            },
+        )
+    else:
+        logger.info(
+            f"Report generation for {text_file_name} started at: {start_date_time_string}",
+            extra={
+                "text_source": WEB_RESOURCE
+                if validators.url(text_file_name)
+                else LOCAL_FILE,
+                "source_name": text_file_name,
+            },
+        )
+        text_analyzer = TextAnalyzer(text)
+        analysis_result = text_analyzer.get_text_analysis()
+        execution_time = (time.time() - start_time) * 1000
+        logger.info(
+            f"The time taken to process the {text_file_name} text {execution_time:.2f} ms",
+            extra={
+                "text_source": WEB_RESOURCE
+                if validators.url(text_file_name)
+                else LOCAL_FILE,
+                "source_name": text_file_name,
+            },
+        )
+        return analysis_result
 
 
 @click.command()
