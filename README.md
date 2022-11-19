@@ -21,7 +21,26 @@ Text sources:
   * Example with web resource: python main.py
   https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-demo.txt
   * Example with web resources: python main.py https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-demo.txt https://sherlock-holm.es/stories/plain-text/advs.txt https://sherlock-holm.es/stories/plain-text/sign.txt https://sherlock-holm.es/stories/plain-text/scan.txt
-- [ ] investigate multiprocessing and threading to process multiple files at the same time
+- [x] investigate multiprocessing and threading to process multiple files at the same time
+  * python main.py stud.txt Sample-text-file-1000kb.txt blh.txt blind.txt
+     * Run with threading.Thread (start and join threads) --- average execution time 4944 ms:
+          - The time taken to process all texts: 5129.74 ms
+          - The time taken to process all texts: 4986.51 ms
+          - The time taken to process all texts: 4718.19 ms
+            ```python
+            text_analyzer_threads = []
+            for file_name in file_names:
+                text_analyzer_thread = threading.Thread(target=text_analyzer_runner, args=(file_name,))
+                text_analyzer_thread.start()
+                text_analyzer_threads.append(text_analyzer_thread)
+        
+            for text_analyzer_thread in text_analyzer_threads:
+                text_analyzer_thread.join()
+            ```
+     * Run with multiprocessing.Pool (map) --- average execution time 3644 ms:
+          - The time taken to process all texts: 3591.38 ms
+          - The time taken to process all texts: 3757.88 ms
+          - The time taken to process all texts: 3584.90 ms
 - [x] add logging with structure:
   * date|type of resource|filename or resource name|event(info,warning, critical)
 - [x] add error handling (for example, binary file or failed to connect to server)

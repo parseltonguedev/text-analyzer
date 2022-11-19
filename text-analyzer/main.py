@@ -14,7 +14,7 @@ from nltk.corpus import PlaintextCorpusReader, stopwords
 from nltk.tokenize import sent_tokenize
 
 TIME_FORMAT = "%I:%M:%S%p on %B %d, %Y"
-LOG_FORMAT = "[%(asctime)s] [%(text_source)-12s] [%(source_name)-12s] %(levelname)-8s %(message)s"
+LOG_FORMAT = "[%(asctime)s] [%(text_source)s] [%(source_name)s] [%(levelname)s] - %(message)s"
 WEB_RESOURCE = "web resource"
 LOCAL_FILE = "local file"
 
@@ -129,7 +129,7 @@ class TextAnalyzer:
             "Top 10 longest palindrome words": self.get_n_palindrome_words(10),
             "Is the whole text a palindrome": self.is_text_a_palindrome(),
             "Is the all words in text palindromes": self.is_all_words_palindromes(),
-            "Reversed text saved to ": self.get_reversed_text(self.text.file_name),
+            "Reversed text saved to": self.get_reversed_text(self.text.file_name),
             "Reversed text with the characters order in the words kept intact saved to":
                 self.get_reversed_text_with_characters_in_words_intact(self.text.file_name),
             f"Report generated for {self.text.file_name} at (date and time)":
@@ -138,7 +138,7 @@ class TextAnalyzer:
 
         for topic, result in analysis_results.items():
             logger.info(
-                f"{topic} --- {result}",
+                f"{topic.upper()}: {result}",
                 extra={
                     "text_source": self.text.source,
                     "source_name": self.text.file_name,
