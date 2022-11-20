@@ -49,7 +49,8 @@ Text sources:
   * It is important to remember, however, that running this file as a script (e.g. python setup.py sdist) 
     is strongly discouraged, and that the majority of the command line interfaces are (or will be) deprecated (e.g. python setup.py install, python setup.py bdist_wininst, …).
     We also recommend users to expose as much as possible configuration in a more declarative way via the pyproject.toml or setup.cfg, and keep the setup.py minimal with only the dynamic parts (or even omit it completely if applicable).
-- [ ] investigate setup.cfg or pyproject.toml
+- [x] refactor text analyzer
+- [ ] investigate setup.cfg or pyproject.toml, create python package
 
 
 ## Issues:
