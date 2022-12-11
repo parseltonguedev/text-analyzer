@@ -16,11 +16,11 @@ Text sources:
 - [x] add CLI support with click:
   * help (python main.py --help)
   * Usage: main.py [OPTIONS] [FILE_NAMES]...
-  * Example with local text file: python main.py file1.txt
-  * Example with local text files: python main.py file1.txt file2.txt file3.txt
-  * Example with web resource: python main.py
+  * Example with local text file: python cli_runner.py file1.txt
+  * Example with local text files: python cli_runner.py file1.txt file2.txt file3.txt
+  * Example with web resource: python cli_runner.py
   https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-demo.txt
-  * Example with web resources: python main.py https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-demo.txt https://sherlock-holm.es/stories/plain-text/advs.txt https://sherlock-holm.es/stories/plain-text/sign.txt https://sherlock-holm.es/stories/plain-text/scan.txt
+  * Example with web resources: python cli_runner.py https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-demo.txt https://sherlock-holm.es/stories/plain-text/advs.txt https://sherlock-holm.es/stories/plain-text/sign.txt https://sherlock-holm.es/stories/plain-text/scan.txt
 - [x] investigate multiprocessing and threading to process multiple files at the same time
   * python main.py stud.txt Sample-text-file-1000kb.txt blh.txt blind.txt
      * Run with threading.Thread (start and join threads) --- average execution time 4944 ms:
@@ -50,7 +50,7 @@ Text sources:
     is strongly discouraged, and that the majority of the command line interfaces are (or will be) deprecated (e.g. python setup.py install, python setup.py bdist_wininst, …).
     We also recommend users to expose as much as possible configuration in a more declarative way via the pyproject.toml or setup.cfg, and keep the setup.py minimal with only the dynamic parts (or even omit it completely if applicable).
 - [x] refactor text analyzer
-- [ ] investigate setup.cfg or pyproject.toml, create python package
+- [x] investigate setup.cfg or pyproject.toml, create python package
 
 
 ## Issues:
