@@ -5,6 +5,7 @@ import time
 import click
 
 from text_analyzer_runner import text_analyzer_runner
+from text_analyzer_db import get_report_view
 
 
 @click.command()
@@ -17,6 +18,9 @@ def main(file_names, view):
     Example with local text files: python main.py file1.txt file2.txt file3.txt
     Example with web resources: python main.py https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-demo.txt
     """
+    if view:
+        get_report_view(view)
+
     start_total_time = time.perf_counter()
     logger = logging.getLogger("text_analyzer")
 

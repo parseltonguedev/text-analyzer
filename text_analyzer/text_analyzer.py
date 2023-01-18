@@ -5,9 +5,10 @@ import re
 from datetime import datetime
 
 from nltk import FreqDist
+from sqlalchemy import insert
 
-from text_analyzer_logger import TIME_FORMAT
 from text_parser import Text
+from text_analyzer_db import engine, text_analysis_table
 
 
 class TextAnalyzer:
@@ -18,29 +19,39 @@ class TextAnalyzer:
 
     def get_text_analysis(self):
         analysis_results = {
-            "The number of paragraphs": self.get_number_of_paragraphs(),
-            "The number of sentences": self.get_number_of_sentences(),
-            "The number of words": self.get_number_of_words(),
-            "The number of characters": self.get_number_of_characters(),
-            "Frequency of characters": self.get_characters_frequency(),
-            "Distribution of characters": self.get_characters_distribution(),
-            "The average word length": self.get_average_word_length(),
-            "The average number of words in a sentence": self.get_average_number_of_words_in_a_sentence(),
-            "Top 10 most used words": self.get_n_most_used_words(10),
-            "Top 10 longest words": self.get_n_longest_words(10),
-            "Top 10 shortest words": self.get_n_shortest_words(10),
-            "Top 10 longest sentences": self.get_n_longest_sentences(10),
-            "Top 10 shortest sentences": self.get_n_shortest_sentences(10),
-            "The number of palindrome words": self.get_number_of_palindromes(),
-            "Top 10 longest palindrome words": self.get_n_palindrome_words(10),
-            "Is the whole text a palindrome": self.is_text_a_palindrome(),
-            "Is the all words in text palindromes": self.is_all_words_palindromes(),
-            "Reversed text saved to": self.get_reversed_text(self.text.file_name),
-            "Reversed text with the characters order in the words kept intact saved to":
+            "file_name": self.text.file_name,
+            "generation_time": datetime.now(),
+            "paragraphs": self.get_number_of_paragraphs(),
+            "sentences": self.get_number_of_sentences(),
+            "words": self.get_number_of_words(),
+            "characters": self.get_number_of_characters(),
+            "characters_frequency": self.get_characters_frequency(),
+            "characters_distribution": self.get_characters_distribution(),
+            "avg_word_length": self.get_average_word_length(),
+            "avg_words_in_sentence": self.get_average_number_of_words_in_a_sentence(),
+            "most_used_words": " ".join(self.get_n_most_used_words(10)),
+            "longest_words": " ".join(self.get_n_longest_words(10)),
+            "shortest_words": " ".join(self.get_n_shortest_words(10)),
+            "longest_sentences": " ".join(self.get_n_longest_sentences(10)),
+            "shortest_sentences": " ".join(self.get_n_shortest_sentences(10)),
+            "number_of_palindromes": self.get_number_of_palindromes(),
+            "longest_palindromes": " ".join(self.get_n_palindrome_words(10)),
+            "is_text_palindrome": self.is_text_a_palindrome(),
+            "is_all_words_are_palindromes": self.is_all_words_palindromes(),
+            "reversed_text_filename": self.get_reversed_text(self.text.file_name),
+            "reversed_with_order_filename":
                 self.get_reversed_text_with_characters_in_words_intact(self.text.file_name),
-            f"Report generated for {self.text.file_name} at (date and time)":
-                datetime.now().strftime(TIME_FORMAT),
         }
+
+        with engine.connect() as connection:
+            result = connection.execute(
+                insert(text_analysis_table),
+                [analysis_results]
+            )
+            self.logger.info(f"SQL INSERT RESULT - {result}", extra={
+                    "text_source": self.text.source,
+                    "source_name": self.text.file_name,
+                })
 
         for topic, result in analysis_results.items():
             self.logger.info(
