@@ -24,7 +24,7 @@ class Text:
     logger = logging.getLogger("text_analyzer")
 
     def __init__(self, file_name: str):
-        if not file_name.endswith(".txt") or validators.url(file_name):
+        if not file_name.endswith(".txt") and not validators.url(file_name):
             self.logger.error(
                 "Text analyzer doesn't support provided source. "
                 "Provide web resource with text or local text file name",
@@ -38,7 +38,6 @@ class Text:
             raise SourceNotSupported(
                 "Text analyzer doesn't support provided source. Provide web resource with text or local text file name"
             )
-
         self.file_name = file_name
         self.source = LOCAL_FILE
         self.file_corpus_reader = self.get_text()
@@ -89,7 +88,7 @@ class Text:
                 extra={"text_source": self.source, "source_name": self.file_name},
             )
 
-        with open(downloaded_file_name, "w", encoding="utf-8") as download:
+        with open(os.path.join(self.text_files_folder_name, downloaded_file_name), "w", encoding="utf-8") as download:
             self.file_name = downloaded_file_name
             download.write(content.text)
 

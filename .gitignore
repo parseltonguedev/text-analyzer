@@ -1,4 +1,6 @@
 *.txt
 *.json
 *.log
+*.db
 .idea/
+__pycache__/
